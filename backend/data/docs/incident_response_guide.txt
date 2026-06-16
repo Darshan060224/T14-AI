@@ -1,0 +1,232 @@
+# Incident Response Guide
+# Step-by-step playbooks for handling common security incidents.
+
+## Incident Response Lifecycle (NIST SP 800-61)
+
+### Phase 1: Preparation
+- Establish incident response team and roles
+- Create and maintain incident response plan
+- Deploy monitoring and detection tools
+- Conduct regular training and tabletop exercises
+- Maintain contact information for stakeholders
+- Prepare communication templates
+- Ensure proper logging is enabled across all systems
+
+### Phase 2: Detection and Analysis
+- Monitor security alerts from SIEM, IDS/IPS, EDR
+- Analyze alerts to determine if they are true positives
+- Determine the scope and impact of the incident
+- Classify the incident severity (Low, Medium, High, Critical)
+- Document initial findings and timeline
+- Notify appropriate stakeholders
+
+### Phase 3: Containment, Eradication, and Recovery
+Short-term Containment:
+- Isolate affected systems from the network
+- Block malicious IPs and domains at the firewall
+- Disable compromised accounts
+- Preserve forensic evidence before making changes
+
+Long-term Containment:
+- Apply patches and security updates
+- Implement additional monitoring
+- Set up clean systems for recovery
+
+Eradication:
+- Remove malware and artifacts
+- Close attack vectors
+- Reset compromised credentials
+- Verify all backdoors are removed
+
+Recovery:
+- Restore systems from clean backups
+- Gradually return systems to production
+- Monitor closely for re-infection
+- Verify system integrity
+
+### Phase 4: Post-Incident Activity
+- Conduct lessons learned meeting
+- Update incident response procedures
+- Improve detection capabilities
+- Document the complete incident timeline
+- Share indicators of compromise with threat intelligence community
+
+## Incident Severity Classification
+
+### Critical
+- Active data exfiltration in progress
+- Ransomware encryption actively spreading
+- Complete system compromise with admin access
+- Multiple systems affected simultaneously
+- Business-critical systems unavailable
+Response Time: Immediate (within 15 minutes)
+
+### High
+- Confirmed malware infection on production system
+- Successful unauthorized access to sensitive data
+- Credential compromise of privileged accounts
+- Active lateral movement detected
+Response Time: Within 1 hour
+
+### Medium
+- Failed brute force attacks from external sources
+- Suspicious but unconfirmed malware detection
+- Policy violations (unauthorized software, access)
+- Single system compromise without lateral movement
+Response Time: Within 4 hours
+
+### Low
+- Reconnaissance/scanning activity
+- Minor policy violations
+- Phishing email received but not clicked
+- Informational alerts
+Response Time: Within 24 hours
+
+## Playbook: Brute Force Attack Response
+
+### Trigger
+- Multiple failed login attempts detected (>5 in 10 minutes)
+- Account lockout alerts
+- SIEM alert for brute force detection
+
+### Immediate Actions
+1. Identify the target account(s) and source IP(s)
+2. Check if any attempts were successful (Event ID 4624 after 4625s)
+3. Block the source IP at the firewall if external
+4. Lock the targeted account(s) temporarily
+5. Check for compromised credentials in known breach databases
+
+### Investigation Steps
+1. Query authentication logs for the affected time period
+2. Determine if the attack was targeted (single account) or sprayed (multiple accounts)
+3. Check if the source IP is known malicious (threat intelligence lookup)
+4. Review successful logins from the same source
+5. Check for lateral movement if any login succeeded
+6. Examine the user's recent activity for anomalies
+
+### Containment
+1. Block attacking IPs at perimeter firewall
+2. Force password reset for targeted accounts
+3. Enable MFA if not already enabled
+4. Implement temporary rate limiting
+
+### Recovery
+1. Unlock accounts after password reset
+2. Monitor for continued attempts
+3. Update firewall block lists
+4. Review and strengthen password policies
+
+## Playbook: Malware Infection Response
+
+### Trigger
+- Antivirus/EDR alert for malware detection
+- Behavioral anomaly detected
+- User reports suspicious activity
+
+### Immediate Actions
+1. Isolate the affected system from the network
+2. Preserve volatile memory (RAM dump) before shutdown
+3. Document the initial indicators (file hash, process name, network connections)
+4. Identify the malware type and family if possible
+
+### Investigation Steps
+1. Analyze the malware sample (static and dynamic analysis)
+2. Determine the infection vector (email, web, USB, lateral movement)
+3. Identify all indicators of compromise (IOCs)
+4. Check other systems for the same IOCs
+5. Determine the scope of compromise
+6. Identify any data exfiltration
+
+### Containment
+1. Block all identified C2 domains and IPs
+2. Quarantine or remove malware from all affected systems
+3. Disable compromised credentials
+4. Block the infection vector (email attachment type, URL, etc.)
+
+### Recovery
+1. Clean or reimage affected systems
+2. Restore data from clean backups
+3. Reset all credentials used on affected systems
+4. Apply patches to prevent re-infection
+5. Gradually return systems to production with enhanced monitoring
+
+## Playbook: Phishing Incident Response
+
+### Trigger
+- User reports suspicious email
+- Email gateway detects phishing attempt
+- Successful credential harvest detected
+
+### Immediate Actions
+1. Preserve the phishing email (headers, body, attachments)
+2. Identify all recipients of the phishing email
+3. Determine if any recipients clicked the link or opened the attachment
+4. Block the sender address and phishing URL
+
+### Investigation Steps
+1. Analyze the phishing email (headers, links, attachments)
+2. Check email gateway logs for delivery to other recipients
+3. Review web proxy logs for visits to the phishing URL
+4. Check if any credentials were submitted
+5. Analyze any attachments in a sandbox
+
+### Containment
+1. Block the phishing URL at the web proxy/firewall
+2. Remove the phishing email from all mailboxes
+3. Force password reset for users who submitted credentials
+4. Block the sender domain if it is entirely malicious
+5. Enable MFA for affected accounts
+
+### Recovery
+1. Confirm no malware was installed
+2. Verify no unauthorized access occurred with stolen credentials
+3. Notify affected users
+4. Update email filtering rules
+5. Conduct targeted security awareness training
+
+## Evidence Collection Procedures
+
+### Digital Evidence Handling
+1. Document everything: who, what, when, where, why
+2. Maintain chain of custody for all evidence
+3. Use write blockers when imaging drives
+4. Calculate and record hash values (MD5, SHA-256) for all evidence
+5. Store evidence in a secure, access-controlled location
+6. Never work on original evidence - always use copies
+
+### Volatile Data Collection (Order of Volatility)
+1. CPU registers, cache
+2. Routing table, ARP cache, process table, kernel stats
+3. Main memory (RAM)
+4. Temporary file systems
+5. Secondary storage (hard drives, SSDs)
+6. Remote logging and monitoring data
+7. Physical configuration, network topology
+8. Archival media (backups, tapes)
+
+### Log Collection
+1. Authentication logs (Windows Security, Linux auth.log)
+2. System logs (Windows System, Linux syslog)
+3. Application logs (web server, database, application)
+4. Network logs (firewall, IDS/IPS, proxy, DNS)
+5. Endpoint logs (EDR, antivirus)
+6. Cloud service logs (Azure AD, AWS CloudTrail, GCP Audit)
+
+## Communication Templates
+
+### Initial Notification (Internal)
+Subject: [SEVERITY] Security Incident - [Brief Description]
+- Incident ID
+- Detection Time
+- Affected Systems/Data
+- Current Status
+- Immediate Actions Taken
+- Next Steps
+- Point of Contact
+
+### Executive Summary
+- What happened (brief, non-technical)
+- What is the impact
+- What are we doing about it
+- What is the expected resolution timeline
+- Do we need to notify regulators or customers

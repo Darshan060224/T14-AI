@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="T14 AI — AI-Powered SOC Analyst Assistant with RAG, MITRE ATT&CK mapping, and log analysis">
+    <title>T14 AI — SOC Analyst Assistant</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+</head>
+<body>
+    <div class="app-container">
+
+        <!-- Sidebar Overlay (mobile) -->
+        <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+        <!-- ── Sidebar ─────────────────────── -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-logo">
+                <div class="logo-icon">🛡️</div>
+                <div class="logo-text">
+                    <h1>T14 AI</h1>
+                    <span>SOC Analyst Assistant</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">Assistant</div>
+                <div class="nav-item active" data-view="chat" onclick="switchView('chat')">
+                    <span class="icon">💬</span>
+                    Security Chat
+                </div>
+                <div class="nav-item" data-view="analyze" onclick="switchView('analyze')">
+                    <span class="icon">🔍</span>
+                    Log Analysis
+                </div>
+                <div class="nav-item" data-view="incident" onclick="switchView('incident')">
+                    <span class="icon">📋</span>
+                    Incident Summary
+                </div>
+
+                <div class="nav-section-title">Knowledge Base</div>
+                <div class="nav-item" data-view="upload" onclick="switchView('upload')">
+                    <span class="icon">📁</span>
+                    Upload Documents
+                </div>
+
+                <div class="nav-section-title">Resources</div>
+                <a class="nav-item" href="/docs" target="_blank" style="text-decoration:none;">
+                    <span class="icon">📖</span>
+                    API Docs (Swagger)
+                </a>
+                <a class="nav-item" href="/redoc" target="_blank" style="text-decoration:none;">
+                    <span class="icon">📄</span>
+                    API Docs (ReDoc)
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="status-badge" id="statusBadge">
+                    <span class="status-dot" id="statusDot"></span>
+                    <span id="statusText">Checking...</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ── Main Content ────────────────── -->
+        <main class="main-content">
+
+            <!-- Header -->
+            <header class="header">
+                <div class="header-title">
+                    <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+                    <h2 id="viewTitle">Security Chat</h2>
+                    <span class="badge" id="ragBadge">RAG</span>
+                </div>
+                <div class="header-actions">
+                    <button class="header-btn" onclick="checkHealth()">
+                        <span>⚡</span> Health Check
+                    </button>
+                    <button class="header-btn" onclick="clearChat()">
+                        <span>🗑️</span> Clear
+                    </button>
+                </div>
+            </header>
+
+            <!-- ══ Chat View ═══════════════════ -->
+            <div class="view-panel active" id="view-chat">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="welcome-message" id="welcomeMessage">
+                        <div class="welcome-icon">🛡️</div>
+                        <h2>T14 AI Security Assistant</h2>
+                        <p>Ask me anything about cybersecurity — from MITRE ATT&CK techniques to incident response procedures. I use a RAG-powered knowledge base to give you accurate, context-aware answers.</p>
+                        <div class="quick-actions">
+                            <button class="quick-action" onclick="sendQuickAction('What is Pass-the-Hash and how do I detect it?')">
+                                <span class="qa-icon">🔑</span>
+                                <span>Explain Pass-the-Hash attack</span>
+                            </button>
+                            <button class="quick-action" onclick="sendQuickAction('How do I investigate suspicious PowerShell activity?')">
+                                <span class="qa-icon">⚡</span>
+                                <span>Investigate PowerShell abuse</span>
+                            </button>
+                            <button class="quick-action" onclick="sendQuickAction('What are the steps for incident response?')">
+                                <span class="qa-icon">📋</span>
+                                <span>Incident response steps</span>
+                            </button>
+                            <button class="quick-action" onclick="sendQuickAction('Explain MITRE ATT&CK T1110 brute force technique')">
+                                <span class="qa-icon">🎯</span>
+                                <span>MITRE T1110 Brute Force</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chat-input-container">
+                    <div class="chat-input-wrapper">
+                        <textarea id="chatInput"
+                            placeholder="Ask a cybersecurity question..."
+                            rows="1"
+                            onkeydown="handleChatKeydown(event)"
+                            oninput="autoResize(this)"></textarea>
+                        <button class="send-btn" id="sendBtn" onclick="sendChatMessage()">➤</button>
+                    </div>
+                    <div class="input-hint">Press Enter to send · Shift+Enter for new line</div>
+                </div>
+            </div>
+
+            <!-- ══ Log Analysis View ═══════════ -->
+            <div class="view-panel" id="view-analyze">
+                <div class="analysis-container">
+                    <div class="analysis-input-card">
+                        <h3>🔍 Log Analysis</h3>
+                        <p>Paste a security log entry below. T14 AI will analyze it for threats, map to MITRE ATT&CK, extract IOCs, and recommend investigation steps.</p>
+                        <textarea class="log-textarea" id="logInput"
+                            placeholder="Jun 15 10:23:01 server sshd[12345]: Failed password for root from 192.168.1.10 port 22 ssh2&#10;&#10;Paste Windows Event Logs, Linux Syslogs, Firewall Logs, IDS Alerts, or SIEM events..."></textarea>
+                        <button class="analyze-btn" id="analyzeBtn" onclick="analyzeLog()">
+                            <span>🔍</span> Analyze Log
+                        </button>
+                    </div>
+
+                    <div class="analysis-results" id="analysisResults">
+                        <!-- Results populated dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══ Incident Summary View ═══════ -->
+            <div class="view-panel" id="view-incident">
+                <div class="analysis-container">
+                    <div class="analysis-input-card">
+                        <h3>📋 Incident Summary Generator</h3>
+                        <p>Enter multiple security events (one per line) to generate a comprehensive executive incident summary with IOCs, timeline, and recommendations.</p>
+                        <textarea class="log-textarea" id="incidentInput" style="min-height:200px;"
+                            placeholder="Failed password for root from 192.168.1.10 port 22 ssh2&#10;Accepted password for admin from 10.0.0.5 port 22 ssh2&#10;PowerShell -encodedcommand detected in process creation logs&#10;Outbound connection to 185.141.27.83:443 detected&#10;&#10;Enter one event per line..."></textarea>
+                        <button class="analyze-btn" id="incidentBtn" onclick="generateIncidentSummary()">
+                            <span>📋</span> Generate Summary
+                        </button>
+                    </div>
+
+                    <div class="analysis-results" id="incidentResults">
+                        <!-- Results populated dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══ Upload View ═════════════════ -->
+            <div class="view-panel" id="view-upload">
+                <div class="upload-container">
+                    <div class="analysis-input-card">
+                        <h3>📁 Upload Knowledge Base Documents</h3>
+                        <p>Expand the RAG knowledge base by uploading cybersecurity documents. These will be chunked, embedded, and stored for future queries.</p>
+                    </div>
+
+                    <div class="upload-zone" id="uploadZone">
+                        <input type="file" id="fileInput" accept=".pdf,.txt,.csv,.md" onchange="uploadFile(this)">
+                        <div class="upload-icon">📤</div>
+                        <h3>Drop files here or click to upload</h3>
+                        <p>Drag and drop your security documents</p>
+                        <div class="file-types">
+                            <span class="file-type-badge">PDF</span>
+                            <span class="file-type-badge">TXT</span>
+                            <span class="file-type-badge">CSV</span>
+                            <span class="file-type-badge">MD</span>
+                        </div>
+                    </div>
+
+                    <div class="upload-result" id="uploadResult">
+                        <!-- Upload result shown here -->
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

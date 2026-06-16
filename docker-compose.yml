@@ -1,0 +1,51 @@
+services:
+
+  # ── FastAPI Application ──────────────────
+  app:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: t14ai-app
+    ports:
+      - "8000:8000"
+    environment:
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      - OLLAMA_MODEL=qwen3:8b
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8000
+      - EMBEDDING_MODEL=all-MiniLM-L6-v2
+    depends_on:
+      chromadb:
+        condition: service_started
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - t14ai-network
+    restart: unless-stopped
+
+
+
+  # ── ChromaDB Vector Database ─────────────
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: t14ai-chromadb
+    ports:
+      - "8001:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+      - ANONYMIZED_TELEMETRY=FALSE
+
+    networks:
+      - t14ai-network
+    restart: unless-stopped
+
+volumes:
+  chroma_data:
+    name: t14ai-chroma-data
+
+networks:
+  t14ai-network:
+    name: t14ai-network
+    driver: bridge

@@ -1,0 +1,165 @@
+# Sigma Detection Rules - Common Security Detections
+# Source: Sigma Rules Repository (https://github.com/SigmaHQ/sigma)
+# This document contains common Sigma detection rules for security monitoring.
+
+## Rule 1: Multiple Failed Login Attempts (Brute Force Detection)
+Title: Multiple Failed Login Attempts
+ID: sigma-001
+Status: production
+Level: medium
+Description: Detects multiple failed login attempts from a single source, indicating a potential brute force attack.
+MITRE ATT&CK: T1110 - Brute Force
+Log Source: Windows Security Event Log (Event ID 4625), Linux auth.log
+Detection Logic:
+  - Windows: EventID 4625 | count by SourceIP > 5 within 10 minutes
+  - Linux: "Failed password" in /var/log/auth.log | count by source_ip > 5 within 10 minutes
+  - Splunk SPL: index=windows EventCode=4625 | stats count by src_ip | where count > 5
+False Positives: Misconfigured service accounts, password changes, legitimate failed logins
+Recommendations: Enable account lockout policies, implement MFA, monitor source IPs
+
+## Rule 2: Suspicious PowerShell Execution
+Title: Suspicious PowerShell Command Line
+ID: sigma-002
+Status: production
+Level: high
+Description: Detects suspicious PowerShell executions including encoded commands, download cradles, and bypass techniques.
+MITRE ATT&CK: T1059.001 - PowerShell
+Log Source: Windows PowerShell Operational Log (Event ID 4104), Process Creation (Event ID 4688)
+Detection Logic:
+  - Detect encoded commands: powershell.exe -enc, -encodedcommand
+  - Detect download cradles: Invoke-WebRequest, Net.WebClient, DownloadString, DownloadFile
+  - Detect bypass: -ExecutionPolicy Bypass, -ep bypass, -nop
+  - Detect suspicious cmdlets: Invoke-Expression, IEX, Invoke-Mimikatz
+  - Splunk SPL: index=windows process_name=powershell.exe (CommandLine="*-enc*" OR CommandLine="*DownloadString*" OR CommandLine="*Invoke-Expression*")
+False Positives: Legitimate admin scripts, system management tools, software installers
+Recommendations: Enable PowerShell ScriptBlock Logging, Constrained Language Mode, AMSI integration
+
+## Rule 3: Credential Dumping - LSASS Access
+Title: LSASS Memory Access
+ID: sigma-003
+Status: production
+Level: critical
+Description: Detects processes accessing LSASS memory, which may indicate credential dumping using tools like Mimikatz.
+MITRE ATT&CK: T1003.001 - LSASS Memory
+Log Source: Sysmon Event ID 10 (Process Access), Windows Security Event Log
+Detection Logic:
+  - Sysmon: EventID 10 AND TargetImage contains "lsass.exe" AND GrantedAccess in (0x1010, 0x1410, 0x1438, 0x143a)
+  - Exclude legitimate processes: csrss.exe, services.exe, smss.exe
+  - Splunk SPL: index=sysmon EventCode=10 TargetImage="*lsass.exe" | where GrantedAccess IN ("0x1010","0x1410","0x1438")
+False Positives: Antivirus software, legitimate security tools, Windows Defender
+Recommendations: Enable Credential Guard, restrict debug privileges, monitor for credential dumping tools
+
+## Rule 4: Suspicious Network Connection
+Title: Outbound Connection to Known Bad IP Ranges
+ID: sigma-004
+Status: production
+Level: high
+Description: Detects outbound network connections to known suspicious or malicious IP ranges.
+MITRE ATT&CK: T1071.001 - Web Protocols (C2)
+Log Source: Firewall logs, Proxy logs, Sysmon Event ID 3
+Detection Logic:
+  - Monitor connections to Tor exit nodes
+  - Detect connections to known C2 infrastructure
+  - Alert on connections to unusual geographies
+  - High volume DNS queries to unusual TLDs
+  - Splunk SPL: index=firewall action=allowed dest_ip IN (known_bad_list) | stats count by src_ip dest_ip
+False Positives: VPN connections, CDN traffic, legitimate services in unusual regions
+Recommendations: Implement threat intelligence feeds, DNS filtering, network segmentation
+
+## Rule 5: Account Created by Non-Admin
+Title: New User Account Creation
+ID: sigma-005
+Status: production
+Level: medium
+Description: Detects creation of new user accounts, especially by non-administrative users or processes.
+MITRE ATT&CK: T1136.001 - Local Account
+Log Source: Windows Security Event Log (Event ID 4720), Linux auth.log
+Detection Logic:
+  - Windows: EventID 4720 (User Account Created)
+  - Linux: useradd or adduser commands in auth.log
+  - Alert when created by non-admin users
+  - Splunk SPL: index=windows EventCode=4720 | table _time SubjectUserName TargetUserName
+False Positives: Legitimate user provisioning, IT helpdesk activities
+Recommendations: Monitor account creation, implement approval workflows, audit user accounts regularly
+
+## Rule 6: Ransomware File Activity
+Title: Mass File Encryption Activity
+ID: sigma-006
+Status: production
+Level: critical
+Description: Detects patterns consistent with ransomware encryption, such as rapid modification of many files with known ransomware extensions.
+MITRE ATT&CK: T1486 - Data Encrypted for Impact
+Log Source: File system monitoring, Sysmon Event ID 11 (File Created)
+Detection Logic:
+  - Detect rapid file creation with extensions: .encrypted, .locked, .crypted, .enc, .crypt
+  - Detect ransom note files: README.txt, HOW_TO_DECRYPT.txt, RECOVER_FILES.html
+  - Monitor for mass file modifications (>100 files in 1 minute)
+  - Splunk SPL: index=sysmon EventCode=11 | regex TargetFilename="\.(encrypted|locked|crypted)$" | stats count by Computer | where count > 50
+False Positives: Legitimate encryption software, backup tools, file compression
+Recommendations: Maintain offline backups, implement network segmentation, use EDR with ransomware protection
+
+## Rule 7: Lateral Movement via RDP
+Title: RDP Session from Unusual Source
+ID: sigma-007
+Status: production
+Level: medium
+Description: Detects RDP connections from unusual or unauthorized source systems.
+MITRE ATT&CK: T1021.001 - Remote Desktop Protocol
+Log Source: Windows Security Event Log (Event ID 4624 Type 10), RDP logs
+Detection Logic:
+  - EventID 4624 with LogonType=10 (RemoteInteractive)
+  - Alert on RDP from non-jump-box systems
+  - Detect first-time RDP connections between hosts
+  - Splunk SPL: index=windows EventCode=4624 LogonType=10 | stats count by src_ip dest_host | where count=1
+False Positives: Legitimate remote administration, IT support activities
+Recommendations: Use jump boxes, restrict RDP access, enable NLA, implement MFA for RDP
+
+## Rule 8: Scheduled Task Creation
+Title: Suspicious Scheduled Task Created
+ID: sigma-008
+Status: production
+Level: medium
+Description: Detects creation of scheduled tasks that may be used for persistence or execution of malicious payloads.
+MITRE ATT&CK: T1053.005 - Scheduled Task
+Log Source: Windows Security Event Log (Event ID 4698), Sysmon
+Detection Logic:
+  - EventID 4698 (Scheduled Task Created)
+  - Detect tasks pointing to unusual locations (temp, appdata, public)
+  - Alert on tasks created by non-admin users
+  - Splunk SPL: index=windows EventCode=4698 | regex TaskContent="(temp|appdata|public)" | table _time SubjectUserName TaskName
+False Positives: Legitimate IT automation, software updates, backup jobs
+Recommendations: Restrict task creation permissions, monitor scheduled tasks, audit existing tasks
+
+## Rule 9: Data Exfiltration via DNS
+Title: Suspicious DNS Query Volume
+ID: sigma-009
+Status: production
+Level: high
+Description: Detects unusually high DNS query volumes or DNS queries with high entropy subdomains, indicating potential DNS tunneling or data exfiltration.
+MITRE ATT&CK: T1071.004 - DNS
+Log Source: DNS server logs, passive DNS, network capture
+Detection Logic:
+  - Detect high volume DNS queries from single host (>500/hour)
+  - Detect long subdomain names (>50 characters)
+  - Detect high entropy domain names
+  - Monitor for TXT record queries to unusual domains
+  - Splunk SPL: index=dns | stats count by src_ip | where count > 500
+False Positives: CDN traffic, legitimate DNS-heavy applications, software updates
+Recommendations: Implement DNS monitoring, use DNS filtering, block known DNS tunneling tools
+
+## Rule 10: Privilege Escalation via Sudo
+Title: Suspicious Sudo Usage on Linux
+ID: sigma-010
+Status: production
+Level: medium
+Description: Detects suspicious sudo usage patterns on Linux systems, including sudoers file modifications and sudo exploitation attempts.
+MITRE ATT&CK: T1548.003 - Sudo and Sudo Caching
+Log Source: Linux auth.log, syslog
+Detection Logic:
+  - Detect sudoers file modifications: /etc/sudoers, /etc/sudoers.d/
+  - Detect sudo to root for unusual users
+  - Detect sudo with suspicious commands: bash, sh, python, perl, ruby
+  - Monitor for sudo exploitation patterns
+  - Splunk SPL: index=linux source="/var/log/auth.log" "sudo" | stats count by user command | where command IN ("bash","sh","python")
+False Positives: Legitimate system administration, authorized sudo usage
+Recommendations: Implement least privilege sudo, monitor sudoers changes, use sudo logging

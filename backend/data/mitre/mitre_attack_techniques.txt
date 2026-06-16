@@ -1,0 +1,190 @@
+# MITRE ATT&CK - Common Techniques Reference
+# Source: MITRE ATT&CK Framework (https://attack.mitre.org)
+# This document contains the most commonly observed techniques in cyber attacks.
+
+## T1110 - Brute Force
+Tactic: Credential Access
+Description: Adversaries may use brute force techniques to gain access to accounts when passwords are unknown or when password hashes are obtained. Brute forcing can involve systematically guessing passwords, trying common passwords, or using password spraying techniques.
+Sub-techniques:
+- T1110.001 - Password Guessing: Attempting to gain access by guessing passwords.
+- T1110.002 - Password Cracking: Using computational methods to crack password hashes offline.
+- T1110.003 - Password Spraying: Trying a small number of commonly used passwords against many accounts.
+- T1110.004 - Credential Stuffing: Using breached username/password pairs against other services.
+Detection: Monitor authentication logs for multiple failed login attempts. Look for patterns of failed logins from single IPs or against single accounts. Alert on account lockouts.
+Mitigation: Implement account lockout policies. Enforce strong password requirements. Enable multi-factor authentication (MFA). Use rate limiting on authentication endpoints.
+
+## T1059 - Command and Scripting Interpreter
+Tactic: Execution
+Description: Adversaries may abuse command and script interpreters to execute commands, scripts, or binaries. These interfaces provide ways of interacting with computer systems and are a common feature across many platforms.
+Sub-techniques:
+- T1059.001 - PowerShell: Adversaries may abuse PowerShell commands and scripts for execution. PowerShell is a powerful interactive command-line interface and scripting environment included in the Windows operating system.
+- T1059.003 - Windows Command Shell: Adversaries may abuse the Windows command shell (cmd.exe) for execution.
+- T1059.004 - Unix Shell: Adversaries may abuse Unix shell commands and scripts for execution.
+Detection: Monitor process creation for unusual command-line arguments. Enable PowerShell script block logging. Look for encoded commands (base64). Monitor for suspicious parent-child process relationships.
+Mitigation: Use application whitelisting. Constrain PowerShell execution with Constrained Language Mode. Enable and monitor PowerShell logging.
+
+## T1078 - Valid Accounts
+Tactic: Defense Evasion, Persistence, Privilege Escalation, Initial Access
+Description: Adversaries may obtain and abuse credentials of existing accounts as a means of gaining Initial Access, Persistence, Privilege Escalation, or Defense Evasion.
+Sub-techniques:
+- T1078.001 - Default Accounts: Using default vendor credentials that have not been changed.
+- T1078.002 - Domain Accounts: Compromised domain accounts for lateral movement.
+- T1078.003 - Local Accounts: Compromised local system accounts.
+- T1078.004 - Cloud Accounts: Compromised cloud service accounts.
+Detection: Monitor for unusual account activity. Track logon patterns and geographic anomalies. Alert on logins from unusual locations or at unusual times.
+Mitigation: Implement least privilege. Use MFA. Regularly audit account permissions. Disable default accounts. Monitor for credential dumps.
+
+## T1055 - Process Injection
+Tactic: Defense Evasion, Privilege Escalation
+Description: Adversaries may inject code into processes in order to evade process-based defenses as well as possibly elevate privileges. Process injection can be performed through various methods.
+Sub-techniques:
+- T1055.001 - Dynamic-link Library Injection: Injecting a DLL into a process.
+- T1055.002 - Portable Executable Injection: Injecting PE files into processes.
+- T1055.003 - Thread Execution Hijacking: Hijacking existing threads.
+- T1055.012 - Process Hollowing: Creating a process in a suspended state and replacing its memory.
+Detection: Monitor process behavior for anomalies. Use API monitoring to detect injection techniques. Look for processes with unusual memory patterns.
+Mitigation: Use endpoint detection and response (EDR) solutions. Implement code signing. Use process integrity verification.
+
+## T1071 - Application Layer Protocol
+Tactic: Command and Control
+Description: Adversaries may communicate using application layer protocols to avoid detection. Commands to the remote system, and often the results of those commands, will be embedded within the protocol traffic.
+Sub-techniques:
+- T1071.001 - Web Protocols: Using HTTP/HTTPS for C2 communication.
+- T1071.002 - File Transfer Protocols: Using FTP/SFTP for data exfiltration.
+- T1071.003 - Mail Protocols: Using SMTP/IMAP for C2.
+- T1071.004 - DNS: Using DNS queries for C2 communication.
+Detection: Monitor network traffic for unusual patterns. Analyze HTTP traffic for beaconing behavior. Inspect DNS queries for anomalies (high entropy, unusual TLDs).
+Mitigation: Use network intrusion detection systems. Implement SSL/TLS inspection. Use DNS filtering and monitoring.
+
+## T1566 - Phishing
+Tactic: Initial Access
+Description: Adversaries may send phishing messages to gain access to victim systems. All forms of phishing are electronically delivered social engineering.
+Sub-techniques:
+- T1566.001 - Spearphishing Attachment: Targeted email with malicious attachment.
+- T1566.002 - Spearphishing Link: Targeted email with malicious link.
+- T1566.003 - Spearphishing via Service: Phishing through third-party services.
+Detection: Monitor email gateways for suspicious attachments and links. Analyze URLs for known malicious indicators. Track user reports of suspicious emails.
+Mitigation: User awareness training. Email filtering solutions. URL sandboxing. Implement DMARC, DKIM, and SPF.
+
+## T1021 - Remote Services
+Tactic: Lateral Movement
+Description: Adversaries may use Valid Accounts to log into a service specifically designed to accept remote connections, such as RDP, SSH, or VNC.
+Sub-techniques:
+- T1021.001 - Remote Desktop Protocol: Using RDP for lateral movement.
+- T1021.002 - SMB/Windows Admin Shares: Using SMB for lateral movement.
+- T1021.004 - SSH: Using SSH for remote access.
+- T1021.006 - Windows Remote Management: Using WinRM for remote execution.
+Detection: Monitor remote login events. Track unusual RDP, SSH, or SMB connections. Alert on lateral movement patterns.
+Mitigation: Limit remote access. Use jump boxes. Implement network segmentation. Require MFA for remote access.
+
+## T1053 - Scheduled Task/Job
+Tactic: Execution, Persistence, Privilege Escalation
+Description: Adversaries may abuse task scheduling functionality to facilitate initial or recurring execution of malicious code.
+Sub-techniques:
+- T1053.002 - At: Using at utility for scheduling.
+- T1053.003 - Cron: Using cron jobs for persistence on Linux.
+- T1053.005 - Scheduled Task: Using Windows Task Scheduler.
+Detection: Monitor scheduled task creation and modification. Track cron job changes on Linux. Alert on tasks created by unusual users.
+Mitigation: Restrict permissions for task scheduling. Monitor task scheduler logs. Use application whitelisting.
+
+## T1027 - Obfuscated Files or Information
+Tactic: Defense Evasion
+Description: Adversaries may attempt to make an executable or file difficult to discover or analyze by encrypting, encoding, or otherwise obfuscating its contents.
+Sub-techniques:
+- T1027.001 - Binary Padding: Adding junk data to change file hash.
+- T1027.002 - Software Packing: Using packers to compress/encrypt executables.
+- T1027.005 - Indicator Removal from Tools: Removing identifying strings.
+- T1027.010 - Command Obfuscation: Using encoding or special characters to hide commands.
+Detection: Detect base64 encoded commands. Monitor for packed executables. Analyze entropy of files. Look for obfuscation patterns in scripts.
+Mitigation: Use advanced malware analysis tools. Implement behavioral detection. Monitor for obfuscation indicators.
+
+## T1486 - Data Encrypted for Impact
+Tactic: Impact
+Description: Adversaries may encrypt data on target systems or on large numbers of systems to interrupt availability. This is commonly associated with ransomware.
+Detection: Monitor for large-scale file modifications. Detect encryption activity through file system monitoring. Alert on unusual process behavior accessing many files rapidly.
+Mitigation: Maintain offline backups. Implement network segmentation. Use endpoint detection and response. Develop and test incident response plans for ransomware.
+
+## T1003 - OS Credential Dumping
+Tactic: Credential Access
+Description: Adversaries may attempt to dump credentials to obtain account login and credential material from the operating system and software.
+Sub-techniques:
+- T1003.001 - LSASS Memory: Dumping credentials from LSASS process memory.
+- T1003.002 - Security Account Manager: Extracting credentials from SAM database.
+- T1003.003 - NTDS: Extracting credentials from Active Directory NTDS.dit.
+- T1003.006 - DCSync: Simulating domain controller replication to extract credentials.
+Detection: Monitor for access to LSASS process. Detect use of credential dumping tools (Mimikatz, secretsdump). Alert on DCSync replication requests from non-DC systems.
+Mitigation: Implement Credential Guard. Restrict debug privileges. Monitor for credential dumping tools. Use Protected Users security group.
+
+## T1548 - Abuse Elevation Control Mechanism
+Tactic: Privilege Escalation, Defense Evasion
+Description: Adversaries may circumvent mechanisms designed to control elevate privileges to gain higher-level permissions.
+Sub-techniques:
+- T1548.002 - Bypass User Account Control: Bypassing Windows UAC.
+- T1548.003 - Sudo and Sudo Caching: Exploiting sudo on Linux.
+Detection: Monitor for UAC bypass techniques. Track sudo usage and configuration changes. Alert on privilege escalation patterns.
+Mitigation: Set UAC to highest enforcement level. Restrict sudo access. Monitor for privilege escalation indicators.
+
+## T1190 - Exploit Public-Facing Application
+Tactic: Initial Access
+Description: Adversaries may attempt to take advantage of a weakness in an Internet-facing computer or program using software, data, or commands in order to cause unintended or unanticipated behavior.
+Detection: Monitor web application logs for exploitation attempts. Use WAF rules to detect common exploits. Track unusual web server behavior.
+Mitigation: Keep applications patched. Use web application firewalls. Implement input validation. Regular vulnerability scanning.
+
+## T1105 - Ingress Tool Transfer
+Tactic: Command and Control
+Description: Adversaries may transfer tools or other files from an external system into a compromised environment.
+Detection: Monitor for unusual file downloads. Track network connections to known malicious infrastructure. Analyze DNS queries for unusual patterns.
+Mitigation: Use network monitoring. Implement egress filtering. Block known malicious domains and IPs.
+
+## T1047 - Windows Management Instrumentation
+Tactic: Execution
+Description: Adversaries may abuse Windows Management Instrumentation (WMI) to execute malicious commands and payloads.
+Detection: Monitor WMI activity. Track process creation via WMI. Alert on remote WMI connections.
+Mitigation: Restrict WMI permissions. Monitor WMI event subscriptions. Use application whitelisting.
+
+## T1543 - Create or Modify System Process
+Tactic: Persistence, Privilege Escalation
+Description: Adversaries may create or modify system-level processes to repeatedly execute malicious payloads as part of persistence.
+Sub-techniques:
+- T1543.002 - Systemd Service: Creating systemd services on Linux.
+- T1543.003 - Windows Service: Creating or modifying Windows services.
+Detection: Monitor service creation and modification. Track changes to systemd unit files. Alert on services created by unusual processes.
+Mitigation: Restrict service creation permissions. Monitor service configurations. Use application whitelisting.
+
+## T1070 - Indicator Removal
+Tactic: Defense Evasion
+Description: Adversaries may delete or modify artifacts generated within systems to remove evidence of their presence or hinder defenses.
+Sub-techniques:
+- T1070.001 - Clear Windows Event Logs: Clearing Windows event logs.
+- T1070.002 - Clear Linux or Mac System Logs: Clearing system logs.
+- T1070.004 - File Deletion: Deleting files to remove evidence.
+Detection: Monitor for log clearing events. Track file deletions in sensitive directories. Alert on event log service disruptions.
+Mitigation: Forward logs to a central SIEM. Implement log integrity monitoring. Restrict log management permissions.
+
+## T1569 - System Services
+Tactic: Execution
+Description: Adversaries may abuse system services or daemons to execute commands or programs.
+Sub-techniques:
+- T1569.001 - Launchctl: Using launchctl on macOS.
+- T1569.002 - Service Execution: Using Windows service control manager.
+Detection: Monitor service execution. Track sc.exe and net start commands. Alert on unusual service starts.
+Mitigation: Restrict service creation. Use least privilege. Monitor service execution logs.
+
+## T1562 - Impair Defenses
+Tactic: Defense Evasion
+Description: Adversaries may maliciously modify components of a victim environment in order to hinder or disable defensive mechanisms.
+Sub-techniques:
+- T1562.001 - Disable or Modify Tools: Disabling security software.
+- T1562.002 - Disable Windows Event Logging: Disabling logging.
+- T1562.004 - Disable or Modify System Firewall: Modifying firewall rules.
+Detection: Monitor for disabled security tools. Track changes to firewall rules. Alert on logging configuration changes.
+Mitigation: Use tamper protection. Monitor security tool health. Implement endpoint detection and response.
+
+## T1098 - Account Manipulation
+Tactic: Persistence, Privilege Escalation
+Description: Adversaries may manipulate accounts to maintain and/or elevate access to victim systems.
+Sub-techniques:
+- T1098.001 - Additional Cloud Credentials: Adding credentials to cloud accounts.
+- T1098.002 - Additional Email Delegate Permissions: Adding email forwarding rules.
+Detection: Monitor account changes. Track permission modifications. Alert on new account creation or privilege changes.
+Mitigation: Implement least privilege. Monitor account modifications. Use MFA. Regular access reviews.

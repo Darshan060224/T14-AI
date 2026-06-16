@@ -1,0 +1,169 @@
+# Cybersecurity Fundamentals Knowledge Base
+# Core concepts, frameworks, and best practices for security operations.
+
+## CIA Triad
+
+The CIA Triad is the foundational model for information security:
+
+### Confidentiality
+Ensuring that information is accessible only to those authorized to have access. Methods include encryption, access controls, authentication mechanisms, and data classification.
+Threats: Data breaches, unauthorized access, insider threats, eavesdropping.
+
+### Integrity
+Ensuring that information and systems are accurate and have not been tampered with. Methods include hashing, digital signatures, checksums, version control, and audit trails.
+Threats: Data tampering, man-in-the-middle attacks, malware, unauthorized modifications.
+
+### Availability
+Ensuring that information and systems are available when needed. Methods include redundancy, backups, disaster recovery, load balancing, and DDoS protection.
+Threats: DDoS attacks, ransomware, hardware failures, natural disasters.
+
+## Common Attack Types
+
+### Malware
+Malicious software designed to damage, disrupt, or gain unauthorized access to computer systems.
+Types: Viruses, Worms, Trojans, Ransomware, Spyware, Adware, Rootkits, Fileless malware.
+Detection: Antivirus/anti-malware solutions, behavioral analysis, sandboxing, EDR.
+MITRE ATT&CK: T1204 (User Execution), T1059 (Command and Scripting Interpreter).
+
+### Phishing
+Social engineering attacks that trick users into revealing sensitive information or installing malware.
+Types: Spearphishing, Whaling, Vishing, Smishing, Business Email Compromise (BEC).
+Detection: Email filtering, URL sandboxing, user awareness training, DMARC/DKIM/SPF.
+MITRE ATT&CK: T1566 (Phishing).
+
+### Man-in-the-Middle (MitM)
+Attacker secretly relays and possibly alters communication between two parties.
+Types: ARP spoofing, DNS spoofing, SSL stripping, Wi-Fi eavesdropping.
+Detection: Certificate validation, HSTS, network monitoring, anomaly detection.
+MITRE ATT&CK: T1557 (Adversary-in-the-Middle).
+
+### SQL Injection
+Inserting malicious SQL code into application queries to manipulate databases.
+Types: In-band, Blind, Out-of-band, Second-order SQL injection.
+Detection: WAF rules, input validation monitoring, database activity monitoring.
+Prevention: Parameterized queries, prepared statements, input validation, least privilege database accounts.
+MITRE ATT&CK: T1190 (Exploit Public-Facing Application).
+
+### Cross-Site Scripting (XSS)
+Injecting malicious scripts into web pages viewed by other users.
+Types: Stored XSS, Reflected XSS, DOM-based XSS.
+Detection: WAF rules, content security policy monitoring, input/output encoding validation.
+Prevention: Output encoding, Content Security Policy (CSP), input validation, HTTPOnly cookies.
+
+### Denial of Service (DoS/DDoS)
+Overwhelming a system or network with traffic to make it unavailable.
+Types: Volumetric, Protocol, Application Layer, Amplification, Slowloris.
+Detection: Traffic analysis, rate monitoring, behavioral baselines, DDoS protection services.
+Mitigation: CDN with DDoS protection, rate limiting, traffic scrubbing, anycast distribution.
+
+### Pass-the-Hash (PtH)
+Using a stolen password hash to authenticate without knowing the actual password.
+Description: Attacker captures NTLM hash from memory (e.g., via Mimikatz) and uses it to authenticate to other systems.
+Detection: Monitor for NTLM authentication anomalies, detect Pass-the-Hash patterns in Event ID 4624 (LogonType 3 with NTLM).
+Mitigation: Use Kerberos instead of NTLM, implement Credential Guard, restrict local admin accounts, use Protected Users group.
+MITRE ATT&CK: T1550.002 (Pass the Hash).
+
+### Pass-the-Ticket (PtT)
+Using stolen Kerberos tickets to authenticate to services.
+Description: Attacker steals TGT or TGS tickets from memory and replays them for unauthorized access.
+Detection: Monitor for unusual Kerberos ticket usage, detect ticket anomalies, Golden Ticket and Silver Ticket patterns.
+Mitigation: Rotate KRBTGT password regularly, implement Credential Guard, monitor Kerberos events.
+MITRE ATT&CK: T1550.003 (Pass the Ticket).
+
+## OWASP Top 10 (2021)
+
+### A01:2021 - Broken Access Control
+Moving up from #5. 94% of applications were tested for some form of broken access control.
+Description: Access control enforces policy such that users cannot act outside their intended permissions.
+Prevention: Deny by default, implement access controls on the server side, disable web server directory listing.
+
+### A02:2021 - Cryptographic Failures
+Previously known as Sensitive Data Exposure. Focus on failures related to cryptography.
+Description: Determining the protection needs of data in transit and at rest.
+Prevention: Classify data, don't store sensitive data unnecessarily, encrypt all data in transit with TLS.
+
+### A03:2021 - Injection
+Including SQL injection, NoSQL injection, OS command injection, LDAP injection.
+Description: User-supplied data is not validated, filtered, or sanitized by the application.
+Prevention: Use safe APIs, parameterized queries, input validation, escape special characters.
+
+### A04:2021 - Insecure Design
+New category focusing on risks related to design and architectural flaws.
+Description: Represents different weaknesses expressed as missing or ineffective control design.
+Prevention: Establish secure development lifecycle, use threat modeling, implement secure design patterns.
+
+### A05:2021 - Security Misconfiguration
+Including XML External Entities (XXE), now part of this category.
+Description: Missing appropriate security hardening or improper configuration.
+Prevention: Repeatable hardening process, minimal platform, review and update configurations.
+
+### A06:2021 - Vulnerable and Outdated Components
+Previously titled Using Components with Known Vulnerabilities.
+Description: Using components with known vulnerabilities or unsupported software.
+Prevention: Remove unused dependencies, continuously inventory versions, monitor CVE databases.
+
+### A07:2021 - Identification and Authentication Failures
+Previously Broken Authentication. Broadened to include identification failures.
+Description: Confirmation of the user's identity, authentication, and session management.
+Prevention: Implement MFA, don't ship with default credentials, implement password checks against known breaches.
+
+### A08:2021 - Software and Data Integrity Failures
+New category focusing on making assumptions related to software updates, critical data, and CI/CD pipelines.
+Description: Code and infrastructure that does not protect against integrity violations.
+Prevention: Use digital signatures, ensure libraries are from trusted repositories, implement code review.
+
+### A09:2021 - Security Logging and Monitoring Failures
+Previously Insufficient Logging & Monitoring.
+Description: Without logging and monitoring, breaches cannot be detected.
+Prevention: Ensure login, access control, and server-side input validation failures can be logged, use centralized log management.
+
+### A10:2021 - Server-Side Request Forgery (SSRF)
+New category added based on industry survey.
+Description: SSRF flaws occur when a web application fetches a remote resource without validating the user-supplied URL.
+Prevention: Sanitize and validate all client-supplied input data, enforce URL schema and port, disable HTTP redirections.
+
+## Log Analysis Best Practices
+
+### Windows Event Log Analysis
+Key Event IDs to Monitor:
+- 4624: Successful Logon (check LogonType: 2=Interactive, 3=Network, 10=RemoteInteractive)
+- 4625: Failed Logon (brute force indicator)
+- 4648: Logon with Explicit Credentials (lateral movement indicator)
+- 4720: User Account Created
+- 4726: User Account Deleted
+- 4732: Member Added to Security Group
+- 4672: Special Privileges Assigned (admin logon)
+- 4688: Process Creation (enable command line logging)
+- 4689: Process Termination
+- 1102: Audit Log Cleared (anti-forensics indicator)
+- 7045: New Service Installed (persistence indicator)
+
+### Linux Syslog Analysis
+Key Log Files:
+- /var/log/auth.log: Authentication events (SSH logins, sudo usage)
+- /var/log/syslog: General system messages
+- /var/log/kern.log: Kernel messages
+- /var/log/apache2/ or /var/log/nginx/: Web server logs
+- /var/log/fail2ban.log: Intrusion prevention logs
+
+Key Patterns:
+- "Failed password for": Failed SSH login attempt
+- "Accepted password for": Successful SSH login
+- "session opened for user root": Root access gained
+- "COMMAND=": Sudo command execution
+- "segfault": Potential exploit attempt
+
+### Firewall Log Analysis
+Key Fields: Source IP, Destination IP, Source Port, Destination Port, Protocol, Action (allow/deny), Bytes transferred.
+Indicators of Compromise:
+- Repeated denied connections from same source (scanning)
+- Connections to known malicious IPs
+- Unusual outbound connections on non-standard ports
+- Large data transfers to external IPs (exfiltration)
+
+### Network Traffic Analysis
+Suspicious Patterns:
+- Beaconing: Regular interval connections to external IPs (C2 communication)
+- DNS tunneling: High volume DNS queries, long subdomain names
+- Data exfiltration: Large outbound transfers, especially to cloud storage
+- Lateral movement: Internal-to-internal connections on management ports (RDP, SSH, SMB)
